@@ -124,7 +124,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const languageId = extensionToLanguageId[fileExt] || document.languageId || 'plaintext';
 
 
-    const formatted = `{${relativePath}}\n\`\`\`${languageId}\n${fileContent}\n\`\`\``;
+    const formatted = `${relativePath}\n\`\`\`${languageId}\n${fileContent}\n\`\`\``;
 
     await vscode.env.clipboard.writeText(formatted);
     vscode.window.showInformationMessage('Copied file with context!');
