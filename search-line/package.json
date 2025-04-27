@@ -1,7 +1,7 @@
 {
-  "name": "copy-file-with-context",
-  "displayName": "copy-file-with-context",
-  "description": "Copies current file with relative path reference and markdown wrapping",
+  "name": "search-line",
+  "displayName": "search-line",
+  "description": "Multi-cursor character finder and selector for fast navigation.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
@@ -18,23 +18,41 @@
   "contributes": {
     "commands": [
         {
-            "command": "extension.findCharacter",
+            "command": "extension.findChar",
             "title": "Find Character"
         },
         {
-            "command": "extension.findCharacterAndSelect",
+            "command": "extension.findCharAndSelect",
+            "title": "Find Character and Select"
+        },
+        {
+            "command": "extension.findCharBackward",
+            "title": "Find Character"
+        },
+        {
+            "command": "extension.findCharAndSelectBackward",
             "title": "Find Character and Select"
         }
     ],
     "keybindings": [
         {
-            "command": "extension.findCharacter",
+            "command": "extension.findChar",
             "key": "ctrl+s f",
             "when": "editorTextFocus"
         },
         {
-            "command": "extension.findCharacterAndSelect",
+            "command": "extension.findCharAndSelect",
             "key": "ctrl+s shift+f",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "extension.findCharBackward",
+            "key": "ctrl+s alt+f",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "extension.findCharAndSelectBackward",
+            "key": "ctrl+s alt+shift+f",
             "when": "editorTextFocus"
         }
     ]

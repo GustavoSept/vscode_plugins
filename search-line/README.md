@@ -1,42 +1,79 @@
-# Find Character Extension for VSCode
+# Search Line - Find by Regex Extension for VSCode
 
-A lightweight VSCode extension that brings Vim-style `f` and `F` motions to your editor!
+A lightweight VSCode extension that lets you **jump** or **select** up to text matching a **regex**!  
+Inspired by Vim's `f`/`F` motions — but much more flexible with full regex support.
 
-Quickly jump to the next occurrence of a character on the current line, or expand the selection up to that character.  
-Fully compatible with multiple cursors — each cursor moves or selects independently.
+Fully compatible with **multi-cursor** editing — each cursor moves or selects independently.
 
 ---
 
 ## Features
 
--   **Find Character** (`Ctrl+S F`):  
-    Move the cursor just **after** the next occurrence of the typed character on the same line.
--   **Find Character and Select** (`Ctrl+S Shift+F`):  
-    Expand the **selection** from the cursor to just **after** the found character.
+-   **Find Forward** (`extension.findChar`):  
+    Move the cursor **after** the next match of the typed regex.
+-   **Find Forward and Select** (`extension.findCharAndSelect`):  
+    Expand the **selection** from the cursor **to after** the next match.
+-   **Find Backward** (`extension.findCharBackward`):  
+    Move the cursor **before** the previous match of the typed regex.
+-   **Find Backward and Select** (`extension.findCharAndSelectBackward`):  
+    Expand the **selection** from the cursor **to before** the previous match.
 
--   Supports **multi-cursor** editing:  
-    If a character isn't found for a given cursor, it stays where it is.
+-   **Multi-cursor support**:  
+    All cursors operate independently. If no match is found for a cursor, it stays where it is.
 
--   Simple, fast, and minimal.
+-   **Regex-based** search:  
+    Enter **any regular expression** to match complex patterns, not just single characters.
+
+-   Fast, simple, and minimal.
 
 ---
 
 ## Usage
 
-1. **Place the cursor(s)** anywhere in your code.
-2. Press `Ctrl+S F` to **move** to the next character.  
-   Or press `Ctrl+S Shift+F` to **select** up to the next character.
-3. **Type the character** you want to find.
-4. Watch your cursor(s) jump or expand the selection!
+1. **Place the cursor(s)** anywhere in your document.
+2. Trigger one of the commands (see below).
+3. **Type a regex** to search for.
+4. Watch your cursor(s) jump or select based on the match!
+
+Examples:
+
+-   Find the next occurrence of `foo` exactly? Type `foo`.
+-   Find any digit? Use `\d`.
+-   Find whitespace? Use `\s`.
 
 ---
 
 ## Commands
 
-| Command                            | Description                               | Default Keybinding |
-| ---------------------------------- | ----------------------------------------- | ------------------ |
-| `extension.findCharacter`          | Find and move to the next occurrence      | `Ctrl+S F`         |
-| `extension.findCharacterAndSelect` | Find and select up to the next occurrence | `Ctrl+S Shift+F`   |
+| Command                               | Description                                                |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `extension.findChar`                  | Move cursor after next regex match (forward)               |
+| `extension.findCharAndSelect`         | Expand selection to after next regex match (forward)       |
+| `extension.findCharBackward`          | Move cursor before previous regex match (backward)         |
+| `extension.findCharAndSelectBackward` | Expand selection to before previous regex match (backward) |
+
+You can assign your own keybindings for these commands through **Preferences → Keyboard Shortcuts**.
+
+Example suggested bindings:
+
+```json
+{
+    "key": "ctrl+s f",
+    "command": "extension.findChar"
+},
+{
+    "key": "ctrl+s shift+f",
+    "command": "extension.findCharAndSelect"
+},
+{
+    "key": "ctrl+s alt+f",
+    "command": "extension.findCharBackward"
+},
+{
+    "key": "ctrl+s shift+alt+f",
+    "command": "extension.findCharAndSelectBackward"
+}
+```
 
 ---
 
