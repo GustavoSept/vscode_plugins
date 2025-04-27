@@ -6,7 +6,7 @@ A lightweight Visual Studio Code extension that lets you quickly copy the conten
 
 ## ✨ Features
 
-- Adds a command and shortcut: `Ctrl+K Ctrl+Shift+C`
+- Adds a command and shortcut: `Ctrl+S Ctrl+Shift+C`
 - Copies the content of the current file to the clipboard in this format:
 
   ```
@@ -23,7 +23,7 @@ A lightweight Visual Studio Code extension that lets you quickly copy the conten
 ## 🔧 Usage
 
 1. Open any file in your workspace.
-2. Press `Ctrl+K Ctrl+Shift+C`
+2. Press `Ctrl+S Ctrl+Shift+C`
 3. Paste the copied content wherever you need — it's already formatted!
 
 ---

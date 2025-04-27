@@ -6,6 +6,10 @@
   "engines": {
     "vscode": "^1.99.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GustavoSept/vscode_plugins.git"
+  },
   "categories": [
     "Other"
   ],
@@ -21,7 +25,7 @@
     "keybindings": [
       {
         "command": "extension.copyFileWithContext",
-        "key": "ctrl+k ctrl+shift+c",
+        "key": "ctrl+s ctrl+shift+c",
         "when": "editorTextFocus"
       }
     ]
