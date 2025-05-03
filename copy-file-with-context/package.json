@@ -2,7 +2,7 @@
   "name": "copy-file-with-context",
   "displayName": "copy-file-with-context",
   "description": "Copies current file with relative path reference and markdown wrapping",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -36,7 +36,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

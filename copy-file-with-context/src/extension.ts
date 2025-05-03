@@ -2,7 +2,6 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 
 const extensionToLanguageId: Record<string, string> = {
     // Web & frontend
@@ -121,15 +120,33 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Header
             const relativePath = path.relative(workspaceFolder.uri.fsPath, document.uri.fsPath);
+            const totalLines = document.lineCount;
 
             // Body of content
             const selection = editor.selection;
             let fileContent = '';
+            let startLine = 1;
+            let endLine = totalLines;
+            let prefix = '';
+            let suffix = '';
 
             if (selection && !selection.isEmpty) {
                 const selectedText = document.getText(selection).trim();
+                const selectedStartLine = selection.start.line + 1;
+                const selectedEndLine = selection.end.line + 1;
+
+                startLine = selectedStartLine;
+                endLine = selectedEndLine;
+
                 if (selectedText.length > 3) {
                     fileContent = selectedText;
+
+                    if (startLine > 1) {
+                        prefix = '[...]' + '\n';
+                    }
+                    if (endLine < totalLines) {
+                        suffix = '\n' + '[...]';
+                    }
                 } else {
                     fileContent = document.getText();
                 }
@@ -141,7 +158,12 @@ export function activate(context: vscode.ExtensionContext) {
             const fileExt = path.extname(document.fileName).replace('.', '').toLowerCase();
             const languageId = extensionToLanguageId[fileExt] || document.languageId || 'plaintext';
 
-            const formatted = `${relativePath}\n\`\`\`${languageId}\n${fileContent}\n\`\`\``;
+            const lineRangeNote =
+                selection && !selection.isEmpty && startLine !== endLine
+                    ? ` (from line ${startLine} to ${endLine})`
+                    : '';
+
+            const formatted = `${relativePath}${lineRangeNote}\n\`\`\`${languageId}\n${prefix}${fileContent}${suffix}\n\`\`\``;
 
             await vscode.env.clipboard.writeText(formatted);
             vscode.window.showInformationMessage('Copied file with context!');
