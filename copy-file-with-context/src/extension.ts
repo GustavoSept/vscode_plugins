@@ -163,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
                     ? ` (from line ${startLine} to ${endLine})`
                     : '';
 
-            const formatted = `${relativePath}${lineRangeNote}\n\`\`\`${languageId}\n${prefix}${fileContent}${suffix}\n\`\`\``;
+            const formatted = `${relativePath}${lineRangeNote}\n\`\`\`${languageId}\n${prefix}${fileContent}${suffix}\n\`\`\`\n\n`;
 
             await vscode.env.clipboard.writeText(formatted);
             vscode.window.showInformationMessage('Copied file with context!');
