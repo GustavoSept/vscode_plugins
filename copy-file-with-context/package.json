@@ -2,7 +2,7 @@
   "name": "copy-file-with-context",
   "displayName": "copy-file-with-context",
   "description": "Copies current file with relative path reference and markdown wrapping",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -20,6 +20,14 @@
       {
         "command": "extension.copyFileWithContext",
         "title": "Copy File With Context"
+      },
+      {
+        "command": "extension.copyFileWithFolding",
+        "title": "Copy File With Context (Respect Folds)"
+      },
+      {
+        "command": "extension.copyMultipleFilesWithContext",
+        "title": "Copy File/Folder With Context"
       }
     ],
     "keybindings": [
@@ -27,8 +35,26 @@
         "command": "extension.copyFileWithContext",
         "key": "ctrl+s ctrl+shift+c",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.copyFileWithFolding",
+        "key": "ctrl+s ctrl+shift+f",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.copyMultipleFilesWithContext",
+        "key": "ctrl+s ctrl+shift+a",
+        "when": "explorerViewletFocus"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "extension.copyMultipleFilesWithContext",
+          "group": "5_cutcopypaste@10"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
