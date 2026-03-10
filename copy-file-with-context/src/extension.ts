@@ -111,6 +111,27 @@ function getLanguageId(filePath: string, fallbackLanguageId?: string): string {
 }
 
 /**
+ * Check if file should be skipped entirely (not copied at all)
+ */
+function shouldSkipFile(filePath: string): boolean {
+    return filePath.endsWith('_templ.go');
+}
+
+/**
+ * Check if file content should be omitted (path shown, content replaced with message)
+ */
+function shouldOmitContent(filePath: string): boolean {
+    return filePath.endsWith('.min.js');
+}
+
+/**
+ * Format an omitted-content block (path + brevity message, no code block)
+ */
+function formatOmittedBlock(relativePath: string): string {
+    return `${relativePath}\n(content omitted for brevity)\n\n`;
+}
+
+/**
  * Get relative path from workspace folder
  */
 function getRelativePath(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder): string {
@@ -188,41 +209,81 @@ async function getFoldingRanges(document: vscode.TextDocument): Promise<vscode.F
 }
 
 /**
- * Get currently collapsed (folded) ranges in the editor
- * This uses a workaround since VS Code doesn't directly expose collapsed state
+ * Detect collapsed folds by finding gaps between consecutive visible ranges.
+ * Each gap in visibleRanges corresponds to a collapsed fold in the viewport.
+ */
+function detectGapsInVisibleRanges(
+    visibleRanges: readonly vscode.Range[],
+    foldingRanges: vscode.FoldingRange[],
+    result: Set<number>
+): void {
+    if (visibleRanges.length <= 1) {
+        return;
+    }
+
+    const sorted = [...visibleRanges].sort((a, b) => a.start.line - b.start.line);
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+        const gapFoldStartLine = sorted[i].end.line;
+        const matchedFold = foldingRanges.find((r) => r.start === gapFoldStartLine);
+        if (matchedFold) {
+            result.add(matchedFold.start);
+        }
+    }
+}
+
+/**
+ * Get currently collapsed (folded) ranges in the editor.
+ * Scans the current viewport for gaps, then scrolls through off-screen regions
+ * to detect folds outside the viewport. Restores scroll position when done.
  */
 async function getCollapsedRanges(editor: vscode.TextEditor): Promise<Set<number>> {
-    const document = editor.document;
-    const visibleRanges = editor.visibleRanges;
-    const foldingRanges = await getFoldingRanges(document);
-
+    const foldingRanges = await getFoldingRanges(editor.document);
     const collapsedStartLines = new Set<number>();
 
-    // Get all folding ranges
-    for (const range of foldingRanges) {
-        // Check if this folding range is collapsed by seeing if its content is not visible
-        // A range is collapsed if lines after the start are not in any visible range
-        const foldStartLine = range.start;
-        const foldEndLine = range.end;
+    if (foldingRanges.length === 0) {
+        return collapsedStartLines;
+    }
 
-        // Check if the fold body (lines after start, up to end) is hidden
-        let isCollapsed = true;
-        for (const visible of visibleRanges) {
-            // If any line in the fold body is visible, it's not collapsed
-            for (let line = foldStartLine + 1; line <= foldEndLine; line++) {
-                if (line >= visible.start.line && line <= visible.end.line) {
-                    isCollapsed = false;
-                    break;
-                }
+    // Detect folds in the current viewport (no scroll needed)
+    detectGapsInVisibleRanges(editor.visibleRanges, foldingRanges, collapsedStartLines);
+
+    // Determine viewport span
+    const vr = editor.visibleRanges;
+    const viewportStart = vr[0].start.line;
+    const viewportEnd = vr[vr.length - 1].end.line;
+    const viewportHeight = Math.max(viewportEnd - viewportStart, 20);
+
+    // Find fold start lines outside the current viewport
+    const uncheckedFolds = foldingRanges.filter(
+        (r) => r.start < viewportStart || r.start > viewportEnd
+    );
+
+    if (uncheckedFolds.length > 0) {
+        const originalVisibleRange = vr[0];
+
+        // Scroll to each unchecked region, batching nearby folds
+        const positions = [...new Set(uncheckedFolds.map((r) => r.start))].sort((a, b) => a - b);
+        let lastCheckedPos = -viewportHeight;
+
+        for (const pos of positions) {
+            // Skip if this position was already covered by a previous scroll
+            if (Math.abs(pos - lastCheckedPos) < viewportHeight / 2) {
+                continue;
             }
-            if (!isCollapsed) {
-                break;
-            }
+
+            editor.revealRange(
+                new vscode.Range(pos, 0, pos, 0),
+                vscode.TextEditorRevealType.InCenter
+            );
+            await new Promise((r) => setTimeout(r, 50));
+
+            detectGapsInVisibleRanges(editor.visibleRanges, foldingRanges, collapsedStartLines);
+            lastCheckedPos = pos;
         }
 
-        if (isCollapsed && foldEndLine > foldStartLine) {
-            collapsedStartLines.add(foldStartLine);
-        }
+        // Restore original scroll position
+        editor.revealRange(originalVisibleRange, vscode.TextEditorRevealType.AtTop);
     }
 
     return collapsedStartLines;
@@ -294,6 +355,20 @@ async function copyFileWithContextCore(options: { respectFolding: boolean }): Pr
     }
 
     const relativePath = getRelativePath(document.uri, workspaceFolder);
+
+    // Skip _templ.go files entirely
+    if (shouldSkipFile(document.fileName)) {
+        vscode.window.showInformationMessage('Skipped: _templ.go files are ignored.');
+        return;
+    }
+
+    // .min.js files: copy path only, omit content
+    if (shouldOmitContent(document.fileName)) {
+        await vscode.env.clipboard.writeText(formatOmittedBlock(relativePath));
+        vscode.window.showInformationMessage('Copied path (content omitted for brevity).');
+        return;
+    }
+
     const selection = editor.selection;
     const hasSelection =
         selection && !selection.isEmpty && document.getText(selection).trim().length > 3;
@@ -358,7 +433,9 @@ async function getFilesRecursively(uri: vscode.Uri): Promise<vscode.Uri[]> {
         const stat = await vscode.workspace.fs.stat(uri);
 
         if (stat.type === vscode.FileType.File) {
-            files.push(uri);
+            if (!shouldSkipFile(uri.fsPath)) {
+                files.push(uri);
+            }
         } else if (stat.type === vscode.FileType.Directory) {
             const entries = await vscode.workspace.fs.readDirectory(uri);
 
@@ -414,8 +491,14 @@ async function processAndCopyFiles(uris: vscode.Uri[]): Promise<void> {
         }
 
         try {
-            const content = await readFileContent(uri);
             const relativePath = getRelativePath(uri, workspaceFolder);
+
+            if (shouldOmitContent(uri.fsPath)) {
+                formattedBlocks.push(formatOmittedBlock(relativePath));
+                continue;
+            }
+
+            const content = await readFileContent(uri);
             const languageId = getLanguageId(uri.fsPath);
 
             const formatted = formatCodeBlock(relativePath, languageId, content);
